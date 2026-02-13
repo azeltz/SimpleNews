@@ -9,6 +9,22 @@ import SwiftUI
 import SwiftData
 
 @main
+struct YourAppNameApp: App {
+    @StateObject private var newsViewModel = NewsViewModel()
+
+    var body: some Scene {
+        WindowGroup {
+            HomeView(viewModel: newsViewModel)
+        }
+    }
+}
+
+
+/*
+import SwiftUI
+import SwiftData
+
+@main
 struct SimpleNewsApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -30,3 +46,4 @@ struct SimpleNewsApp: App {
         .modelContainer(sharedModelContainer)
     }
 }
+*/
