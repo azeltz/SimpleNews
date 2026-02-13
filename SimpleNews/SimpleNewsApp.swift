@@ -14,36 +14,24 @@ struct YourAppNameApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView(viewModel: newsViewModel)
+            TabView {
+                HomeView(viewModel: newsViewModel)
+                    .tabItem {
+                        Label("Home", systemImage: "house")
+                    }
+
+                SavedView(viewModel: newsViewModel)
+                    .tabItem {
+                        Label("Saved", systemImage: "bookmark")
+                    }
+
+                NavigationStack {
+                    SettingsView(viewModel: newsViewModel)
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+            }
         }
     }
 }
-
-
-/*
-import SwiftUI
-import SwiftData
-
-@main
-struct SimpleNewsApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-        .modelContainer(sharedModelContainer)
-    }
-}
-*/

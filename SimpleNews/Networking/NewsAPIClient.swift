@@ -22,7 +22,18 @@ struct NewsdataArticle: Codable {
     let link: String?
 
     func toArticle() -> Article {
-        Article(
+        let date: Date?
+        if let pubDate = pubDate {
+            let formatter = DateFormatter()
+                        formatter.locale = Locale(identifier: "en_US_POSIX")
+                        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+                        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                        date = formatter.date(from: pubDate)
+                    } else {
+                        date = nil
+                    }
+
+        return Article(
             id: UUID().uuidString,
             title: title ?? "Untitled",
             description: description,
@@ -30,28 +41,32 @@ struct NewsdataArticle: Codable {
             imageURL: URL(string: image_url ?? ""),
             source: source_id,
             category: category?.first,
-            publishedAt: nil, // parse if you want
+            publishedAt: date,
             url: URL(string: link ?? ""),
             isSaved: false,
             liked: nil
         )
     }
+
 }
 
 final class NewsAPIClient {
-    private let apiKey = "<YOUR_NEWSDATA_API_KEY>"
-    private let baseURL = URL(string: "https://newsdata.io/api/1/news")!
+    private let apiKey = "pub_8cd7ea8761d74a95bea7b79a5c6cb8dd"
+    private let baseURL = URL(string: "https://newsdata.io/api/1/latest")!
 
-    func fetchArticles() async throws -> [Article] {
-        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
-        components.queryItems = [
-            URLQueryItem(name: "apikey", value: apiKey),
-            URLQueryItem(name: "country", value: "us"),
-            URLQueryItem(name: "language", value: "en")
-        ]
+    func fetchArticles(params: [String: String]) async throws -> [Article] {
+            var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+            var queryItems = [URLQueryItem(name: "apikey", value: apiKey)]
 
-        let (data, _) = try await URLSession.shared.data(from: components.url!)
-        let decoded = try JSONDecoder().decode(NewsdataResponse.self, from: data)
-        return decoded.results.map { $0.toArticle() }
+            for (key, value) in params {
+                queryItems.append(URLQueryItem(name: key, value: value))
+            }
+
+            components.queryItems = queryItems
+
+            let url = components.url!
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decoded = try JSONDecoder().decode(NewsdataResponse.self, from: data)
+            return decoded.results.map { $0.toArticle() }
+        }
     }
-}
