@@ -1,8 +1,8 @@
 //
-//  ArticleDetailView.swift
-//  SimpleNews
+// ArticleDetailView.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import SwiftUI
@@ -18,7 +18,10 @@ struct ArticleDetailView: View {
     let article: Article
     let showImages: Bool
     let onToggleSaved: () -> Void
-    
+
+    @State private var showSafari: Bool = false
+    @Environment(\.openURL) private var openURL
+
     // Helper to decide what text to show
     private func bodyText(for article: Article) -> String? {
         // If content exists but is just the paid-plan placeholder, treat as nil
@@ -34,7 +37,6 @@ struct ArticleDetailView: View {
 
         return nil
     }
-
 
     var body: some View {
         ScrollView {
@@ -76,6 +78,22 @@ struct ArticleDetailView: View {
                         .foregroundColor(.secondary)
                 }
 
+                if !article.tags.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(article.tags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.secondary.opacity(0.15))
+                                )
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
                 Divider()
 
                 if let text = bodyText(for: article) {
@@ -85,6 +103,32 @@ struct ArticleDetailView: View {
                 } else {
                     Text("No content available.")
                         .foregroundColor(.secondary)
+                }
+
+                // Link actions
+                if let url = article.url {
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Read full article")
+                            .font(.headline)
+
+                        HStack(spacing: 12) {
+                            Button {
+                                showSafari = true
+                            } label: {
+                                Label("Open in reader", systemImage: "doc.text.magnifyingglass")
+                                    .font(.subheadline)
+                            }
+
+                            Button {
+                                openURL(url)
+                            } label: {
+                                Label("Open in browser", systemImage: "arrow.up.right.square")
+                                    .font(.subheadline)
+                            }
+                        }
+                    }
                 }
             }
             .padding()
@@ -97,6 +141,12 @@ struct ArticleDetailView: View {
                 Button(action: onToggleSaved) {
                     Image(systemName: article.isSaved ? "bookmark.fill" : "bookmark")
                 }
+            }
+        }
+        .fullScreenCover(isPresented: $showSafari) {
+            if let url = article.url {
+                SafariView(url: url)
+                    .ignoresSafeArea() // feel like a dedicated reader screen
             }
         }
     }

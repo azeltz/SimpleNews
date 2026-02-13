@@ -20,18 +20,19 @@ struct NewsdataArticle: Codable {
     let source_id: String?
     let pubDate: String?
     let link: String?
+    let tags: [String]?
 
     func toArticle() -> Article {
         let date: Date?
         if let pubDate = pubDate {
             let formatter = DateFormatter()
-                        formatter.locale = Locale(identifier: "en_US_POSIX")
-                        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-                        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                        date = formatter.date(from: pubDate)
-                    } else {
-                        date = nil
-                    }
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            date = formatter.date(from: pubDate)
+        } else {
+            date = nil
+        }
 
         return Article(
             id: UUID().uuidString,
@@ -44,11 +45,12 @@ struct NewsdataArticle: Codable {
             publishedAt: date,
             url: URL(string: link ?? ""),
             isSaved: false,
-            liked: nil
+            liked: nil,
+            aiTags: tags ?? []
         )
     }
-
 }
+
 
 final class NewsAPIClient {
     private let apiKey = "pub_8cd7ea8761d74a95bea7b79a5c6cb8dd"

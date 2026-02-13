@@ -1,16 +1,23 @@
 //
-//  HomeView.swift
-//  SimpleNews
+// HomeView.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import SwiftUI
 
+struct SafariItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
 struct HomeView: View {
     @ObservedObject var viewModel: NewsViewModel
+
     @State private var expandedArticleID: String? = nil
     @State private var selectedArticle: Article? = nil
+    @State private var safariItem: SafariItem? = nil
 
     var body: some View {
         NavigationStack {
@@ -30,12 +37,18 @@ struct HomeView: View {
                         ArticleRow(
                             article: article,
                             showImages: viewModel.settings.showImages,
+                            showDescription: viewModel.settings.showDescriptions,
                             isExpanded: expandedArticleID == article.id,
                             onToggleSaved: {
                                 viewModel.toggleSaved(article)
                             },
                             onOpenDetail: {
                                 selectedArticle = article
+                            },
+                            onOpenLink: {                     // NEW
+                                if let url = article.url {
+                                    safariItem = SafariItem(url: url)
+                                }
                             }
                         )
                         .contentShape(Rectangle()) // make whole row tappable
@@ -61,30 +74,25 @@ struct HomeView: View {
                             }
                         }
                     }
-                    .animation(.easeInOut, value: expandedArticleID)
-                    .sheet(item: $selectedArticle) { article in
-                        NavigationStack {
-                            ArticleDetailView(
-                                article: article,
-                                showImages: viewModel.settings.showImages,
-                                onToggleSaved: {
-                                    viewModel.toggleSaved(article)
-                                }
-                            )
-                        }
-                    }
                 }
             }
-            .navigationTitle("News")
-            /*.toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink {
-                        SettingsView(viewModel: viewModel)
-                    } label: {
-                        Image(systemName: "gear")
-                    }
+            .animation(.easeInOut, value: expandedArticleID)
+            .sheet(item: $selectedArticle) { article in
+                NavigationStack {
+                    ArticleDetailView(
+                        article: article,
+                        showImages: viewModel.settings.showImages,
+                        onToggleSaved: {
+                            viewModel.toggleSaved(article)
+                        }
+                    )
                 }
-            }*/
+            }
+            .fullScreenCover(item: $safariItem) { item in
+                SafariView(url: item.url)
+                    .ignoresSafeArea()
+            }
+            .navigationTitle("News")
             .task {
                 await viewModel.loadInitial()
             }

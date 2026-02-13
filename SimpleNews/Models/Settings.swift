@@ -1,30 +1,52 @@
 //
-//  Settings.swift
-//  SimpleNews
+// Settings.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import Foundation
 
 enum NewsLanguage: String, CaseIterable, Identifiable, Codable {
-    case en   // English
-    case es   // Spanish
-    case fr   // French
-    case de   // German
-    case it   // Italian
-    case he   // Hebrew
+    case en // English
+    case he // Hebrew
+    case es // Spanish
+    case fr // French
+    case de // German
+    case it // Italian
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
         case .en: return "English"
+        case .he: return "Hebrew"
         case .es: return "Spanish"
         case .fr: return "French"
         case .de: return "German"
         case .it: return "Italian"
-        case .he: return "Hebrew"
+        }
+    }
+}
+
+enum NewsCountry: String, CaseIterable, Identifiable, Codable {
+    case us
+    case il
+    case gb
+    case ca
+    case au
+    case de
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .us: return "United States"
+        case .il: return "Israel"
+        case .gb: return "United Kingdom"
+        case .ca: return "Canada"
+        case .au: return "Australia"
+        case .de: return "Germany"
         }
     }
 }
@@ -43,8 +65,18 @@ let knownCategories: Set<String> = [
     "world"
 ]
 
-
 struct AppSettings: Codable {
-    var language: NewsLanguage = .en
+    // Multiple languages and countries (Newsdata supports up to 5 each)
+    var languages: [NewsLanguage] = [.en]
+    var countries: [NewsCountry] = [.us]
+
+    // Display
     var showImages: Bool = true
+    var showDescriptions: Bool = true    // NEW
+
+    // Preferred sources (domains, e.g. "nytimes.com", "apnews.com")
+    var preferredSources: [String] = []
+
+    // Only top outlets + stricter sorting
+    var qualityMode: Bool = false
 }

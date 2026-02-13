@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct YourAppNameApp: App {
+struct SimpleNewsApp: App {
     @StateObject private var newsViewModel = NewsViewModel()
 
     var body: some Scene {

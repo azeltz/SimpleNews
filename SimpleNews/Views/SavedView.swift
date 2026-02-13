@@ -11,6 +11,7 @@ struct SavedView: View {
     @ObservedObject var viewModel: NewsViewModel
     @State private var expandedArticleID: String? = nil
     @State private var selectedArticle: Article? = nil
+    @State private var safariItem: SafariItem? = nil
 
     var body: some View {
         NavigationStack {
@@ -24,12 +25,18 @@ struct SavedView: View {
                     ArticleRow(
                         article: article,
                         showImages: viewModel.settings.showImages,
+                        showDescription: viewModel.settings.showDescriptions,
                         isExpanded: expandedArticleID == article.id,
                         onToggleSaved: {
                             viewModel.toggleSaved(article)
                         },
                         onOpenDetail: {
                             selectedArticle = article
+                        },
+                        onOpenLink: {
+                                if let url = article.url {
+                                    safariItem = SafariItem(url: url)
+                                }
                         }
                     )
                     .contentShape(Rectangle())
@@ -42,6 +49,10 @@ struct SavedView: View {
                     }
                 }
                 .navigationTitle("Saved")
+                .fullScreenCover(item: $safariItem) { item in
+                    SafariView(url: item.url)
+                        .ignoresSafeArea()
+                }
             }
         }
     }
