@@ -72,11 +72,14 @@ struct AppSettings: Codable {
 
     // Display
     var showImages: Bool = true
-    var showDescriptions: Bool = true    // NEW
+    var showDescriptions: Bool = true
 
     // Preferred sources (domains, e.g. "nytimes.com", "apnews.com")
     var preferredSources: [String] = []
 
     // Only top outlets + stricter sorting
     var qualityMode: Bool = false
+
+    // Ask before removing from Saved
+    var confirmUnsaveInSavedTab: Bool = true    // NEW
 }

@@ -1,59 +1,117 @@
 //
-//  SavedView.swift
-//  SimpleNews
+// SavedView.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import SwiftUI
 
 struct SavedView: View {
     @ObservedObject var viewModel: NewsViewModel
+
     @State private var expandedArticleID: String? = nil
-    @State private var selectedArticle: Article? = nil
+    @State private var selectedSaved: SavedArticle? = nil
     @State private var safariItem: SafariItem? = nil
+    @State private var pendingUnsave: SavedArticle? = nil
+    @State private var showUnsaveAlert: Bool = false
 
     var body: some View {
         NavigationStack {
-            if viewModel.savedArticles.isEmpty {
-                Text("No saved articles yet.")
-                    .foregroundColor(.secondary)
-                    .padding()
-                    .navigationTitle("Saved")
-            } else {
-                List(viewModel.savedArticles) { article in
-                    ArticleRow(
-                        article: article,
-                        showImages: viewModel.settings.showImages,
-                        showDescription: viewModel.settings.showDescriptions,
-                        isExpanded: expandedArticleID == article.id,
-                        onToggleSaved: {
-                            viewModel.toggleSaved(article)
-                        },
-                        onOpenDetail: {
-                            selectedArticle = article
-                        },
-                        onOpenLink: {
-                                if let url = article.url {
+            Group {
+                if viewModel.savedArticles.isEmpty {
+                    Text("No saved articles yet.")
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                } else {
+                    List(viewModel.savedArticles) { saved in
+                        let article = articleFromSaved(saved)
+
+                        ArticleRow(
+                            article: article,
+                            showImages: viewModel.settings.showImages,
+                            showDescription: viewModel.settings.showDescriptions,
+                            isExpanded: expandedArticleID == article.id,
+                            onToggleSaved: {
+                                if viewModel.settings.confirmUnsaveInSavedTab {
+                                    // Ask for confirmation
+                                    pendingUnsave = saved
+                                    showUnsaveAlert = true
+                                } else {
+                                    // Directly toggle
+                                    viewModel.toggleSaved(article)
+                                }
+                            },
+                            onOpenDetail: {
+                                selectedSaved = saved
+                            },
+                            onOpenLink: {
+                                if let url = saved.url {
                                     safariItem = SafariItem(url: url)
                                 }
-                        }
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        if expandedArticleID == article.id {
-                            expandedArticleID = nil
-                        } else {
-                            expandedArticleID = article.id
+                            }
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if expandedArticleID == article.id {
+                                expandedArticleID = nil
+                            } else {
+                                expandedArticleID = article.id
+                            }
                         }
                     }
                 }
-                .navigationTitle("Saved")
-                .fullScreenCover(item: $safariItem) { item in
-                    SafariView(url: item.url)
-                        .ignoresSafeArea()
+            }
+            .navigationTitle("Saved")
+            .sheet(item: $selectedSaved) { saved in
+                let article = articleFromSaved(saved)
+                NavigationStack {
+                    ArticleDetailView(
+                        article: article,
+                        showImages: viewModel.settings.showImages,
+                        onToggleSaved: {
+                            viewModel.toggleSaved(article)
+                        }
+                    )
                 }
             }
+            .fullScreenCover(item: $safariItem) { item in
+                SafariView(url: item.url)
+                    .ignoresSafeArea()
+            }
+        }
+        .alert("Remove from Saved?", isPresented: $showUnsaveAlert, presenting: pendingUnsave) { item in
+            Button("Remove", role: .destructive) {
+                let article = articleFromSaved(item)
+                viewModel.toggleSaved(article)
+                pendingUnsave = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingUnsave = nil
+            }
+        } message: { _ in
+            Text("Are you sure you want to remove this article from your saved list?")
         }
     }
+
+    // Build a lightweight Article from SavedArticle for reuse with ArticleRow / ArticleDetailView
+    private func articleFromSaved(_ saved: SavedArticle) -> Article {
+        Article(
+            id: saved.id,
+            title: saved.title,
+            description: saved.description,
+            content: nil,
+            imageURL: saved.imageURL,
+            source: saved.source,
+            category: nil,
+            publishedAt: saved.publishedAt,
+            url: saved.url,
+            isSaved: true,
+            liked: nil,
+            aiTags: []
+        )
+    }
 }
+
+// Wrapper used for Safari fullScreenCover (define onc

@@ -138,6 +138,7 @@ struct SettingsView: View {
         Section("Display") {
             Toggle("Show images in list", isOn: $draftSettings.showImages)
             Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
+            Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab) // NEW
         }
     }
 

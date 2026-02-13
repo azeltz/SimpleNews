@@ -1,21 +1,28 @@
 //
-//  SavedArticlesStorage.swift
-//  SimpleNews
+// SavedArticlesStorage.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import Foundation
 
-private let savedIDsKey = "savedArticleIDs"
+private let savedArticlesKey = "savedArticles"
 
 struct SavedArticlesStorage {
-    static func load() -> Set<String> {
-        let ids = UserDefaults.standard.stringArray(forKey: savedIDsKey) ?? []
-        return Set(ids)
+    static func load() -> [SavedArticle] {
+        guard let data = UserDefaults.standard.data(forKey: savedArticlesKey) else {
+            return []
+        }
+        if let decoded = try? JSONDecoder().decode([SavedArticle].self, from: data) {
+            return decoded
+        }
+        return []
     }
 
-    static func save(_ ids: Set<String>) {
-        UserDefaults.standard.set(Array(ids), forKey: savedIDsKey)
+    static func save(_ articles: [SavedArticle]) {
+        if let data = try? JSONEncoder().encode(articles) {
+            UserDefaults.standard.set(data, forKey: savedArticlesKey)
+        }
     }
 }
