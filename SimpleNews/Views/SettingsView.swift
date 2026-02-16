@@ -15,9 +15,9 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            displaySection
             languageAndCountrySection
             sourceQualitySection
-            displaySection
             interestsSection
         }
         .navigationTitle("Settings")
@@ -29,6 +29,18 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Stuff to show on the app
+    
+    private var displaySection: some View {
+        Section("Display") {
+            Toggle("Include Newsdata articles", isOn: $draftSettings.enableNewsdata)
+            Toggle("Include RSS articles", isOn: $draftSettings.enableRSS)
+            Toggle("Show images in list", isOn: $draftSettings.showImages)
+            Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
+            Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab) // NEW
+        }
+    }
+    
     // MARK: - Combined languages + countries
 
     private var languageAndCountrySection: some View {
@@ -131,14 +143,6 @@ struct SettingsView: View {
                     newSourceDomain = ""
                 }
             }
-        }
-    }
-
-    private var displaySection: some View {
-        Section("Display") {
-            Toggle("Show images in list", isOn: $draftSettings.showImages)
-            Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
-            Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab) // NEW
         }
     }
 

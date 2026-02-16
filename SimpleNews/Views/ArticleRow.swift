@@ -57,6 +57,12 @@ struct ArticleRow: View {
                         .foregroundColor(.secondary)
                         .lineLimit(isExpanded ? nil : 2)
                 }
+                
+                if let source = article.source {
+                        Text(source)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                }
 
                 if let publishedAt = article.publishedAt {
                     Text(articleDateFormatter.string(from: publishedAt))

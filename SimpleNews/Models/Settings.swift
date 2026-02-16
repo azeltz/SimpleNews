@@ -66,6 +66,10 @@ let knownCategories: Set<String> = [
 ]
 
 struct AppSettings: Codable {
+    // Where to get data from
+    var enableNewsdata: Bool = true
+    var enableRSS: Bool = true
+    
     // Multiple languages and countries (Newsdata supports up to 5 each)
     var languages: [NewsLanguage] = [.en]
     var countries: [NewsCountry] = [.us]

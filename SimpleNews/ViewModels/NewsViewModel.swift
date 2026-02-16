@@ -21,6 +21,7 @@ final class NewsViewModel: ObservableObject {
         return loaded.sorted { ($0.publishedAt ?? .distantPast) > ($1.publishedAt ?? .distantPast) }
     }()
     private let client = NewsAPIClient()
+    private let rssClient = RSSBackendClient()
     private var lastFetchDate: Date? = nil
 
     // MARK: - Saved Articles Storage
@@ -64,28 +65,22 @@ final class NewsViewModel: ObservableObject {
     func fetchArticles() async {
         isLoading = true
         errorMessage = nil
+
         do {
             let params = QueryBuilder.queryParams(settings: settings, tagWeights: tagWeights)
-            let fetched = try await client.fetchArticles(params: params)
 
-            // Build a set of saved URLs to mark live articles
-            let savedURLStrings = Set(
-                savedArticles.compactMap { $0.url?.absoluteString }
-            )
+            async let newsdataArticles = client.fetchArticles(params: params)
+            async let rssArticles = rssClient.fetchArticles()
 
-            // Apply saved flags based on URL match
-            let withSavedFlags = fetched.map { article -> Article in
-                var copy = article
-                if let urlString = article.url?.absoluteString,
-                   savedURLStrings.contains(urlString) {
-                    copy.isSaved = true
-                }
-                return copy
-            }
+            let fetchedNewsdata = try await newsdataArticles
+            let fetchedRSS = try await rssArticles
 
-            // De-duplicate by URL
+            // 1. Combine
+            var combined = fetchedRSS + fetchedNewsdata   // or the other order, doesn’t matter before sort
+
+            // 2. De-duplicate by URL
             var seen = Set<URL>()
-            let deduped = withSavedFlags.filter { article in
+            combined = combined.filter { article in
                 guard let url = article.url else { return true }
                 if seen.contains(url) {
                     return false
@@ -95,19 +90,33 @@ final class NewsViewModel: ObservableObject {
                 }
             }
 
-            // Score and sort by tagWeights (simple relevance)
+            // 3. Score and sort combined array
             let preferred = Set(settings.preferredSources.map { $0.lowercased() })
-            let scored = deduped
+
+            let scored = combined
                 .map { article -> (Article, Double) in
                     let tag = article.category?.lowercased() ?? ""
                     var score = tagWeights[tag, default: 0]
+
                     if let host = article.url?.host?.lowercased(),
                        preferred.contains(host) {
-                        score += 2.0 // boost preferred domains
+                        score += 2.0
                     }
+
                     return (article, score)
                 }
-                .sorted { $0.1 > $1.1 }
+                .sorted { lhs, rhs in
+                    let (a, aScore) = lhs
+                    let (b, bScore) = rhs
+
+                    let aDate = a.publishedAt ?? .distantPast
+                    let bDate = b.publishedAt ?? .distantPast
+
+                    if aDate != bDate {
+                        return aDate > bDate          // newer first
+                    }
+                    return aScore > bScore            // then by score
+                }
                 .map { $0.0 }
 
             self.articles = scored
